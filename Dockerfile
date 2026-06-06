@@ -5,6 +5,8 @@ COPY src ./src
 RUN mvn clean package -DskipTests
 
 FROM eclipse-temurin:21-jre-alpine
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+USER appuser
 WORKDIR /app
 COPY --from=builder /app/target/*.jar app.jar
 

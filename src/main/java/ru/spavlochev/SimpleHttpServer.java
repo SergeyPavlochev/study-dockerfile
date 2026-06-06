@@ -7,52 +7,47 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.Set;
 
 public class SimpleHttpServer {
 
-	private static final Logger LOG = Logger.getLogger(SimpleHttpServer.class.getName());
-	private static final byte[] DEFAULT_RESPONSE = "{\"status\": \"OK\"}".getBytes(Charset.defaultCharset());
-	private static final int OK = 200;
-	public static final int NOT_FOUND = 404;
-	private static final int PORT = 8000;
+    private static final int PORT = 8000;
+    private static final String SUPPORTED_METHOD = "GET";
+    private static final Set<String> SUPPORTED_URIS = Set.of("/health", "/health/");
+    private static final byte[] DEFAULT_RESPONSE = "{\"status\": \"OK\"}".getBytes(Charset.defaultCharset());
+    private static final int STATUS_OK = 200;
+    private static final int STATUS_NOT_FOUND = 404;
 
-	public static void main(String[] args) throws IOException {
-		HttpServer httpServer = HttpServer.create(new InetSocketAddress(PORT), 0);
+    public static void main(String[] args) throws IOException {
+        HttpServer httpServer = HttpServer.create(new InetSocketAddress(PORT), 0);
 
-		httpServer.createContext("/", httpExchange -> {
-			String requestMethod = httpExchange.getRequestMethod();
-			String requestURI = httpExchange.getRequestURI().toString();
-			LOG.log(Level.INFO, "IN_Rq: Method {0}, URI {1}", new Object[]{requestMethod, requestURI});
+        httpServer.createContext("/", httpExchange -> {
+            String requestMethod = httpExchange.getRequestMethod();
+            String requestURI = httpExchange.getRequestURI().toString();
+            System.out.printf("Incoming request: method %s, URI '%s'%n", requestMethod, requestURI);
 
-			if (isValidRequest(requestMethod, requestURI)) {
-				Headers responseHeaders = httpExchange.getResponseHeaders();
-				responseHeaders.add("Content-Type", "application/json");
-				httpExchange.sendResponseHeaders(OK, DEFAULT_RESPONSE.length);
-				try (OutputStream outputStream = httpExchange.getResponseBody()) {
-					outputStream.write(DEFAULT_RESPONSE);
-				}
-				LOG.log(Level.INFO, "OUT_Rs: URI {0}, Status {1}, Body {2}",
-						new Object[]{requestURI, OK, new String(DEFAULT_RESPONSE)});
-			} else {
-				LOG.warning("Unsupported URI '" + requestURI + "'");
-				httpExchange.sendResponseHeaders(NOT_FOUND, -1);
-				LOG.log(Level.INFO, "OUT_Rs: URI {0}, Status {1}", new Object[]{requestURI, NOT_FOUND});
-			}
+            if (isSupportedRequest(requestMethod, requestURI)) {
+                Headers responseHeaders = httpExchange.getResponseHeaders();
+                responseHeaders.add("Content-Type", "application/json");
+                httpExchange.sendResponseHeaders(STATUS_OK, DEFAULT_RESPONSE.length);
+                try (OutputStream outputStream = httpExchange.getResponseBody()) {
+                    outputStream.write(DEFAULT_RESPONSE);
+                }
+                System.out.println("Supported request: response status " + STATUS_OK);
+            } else {
+                httpExchange.sendResponseHeaders(STATUS_NOT_FOUND, -1);
+                System.out.println("Unsupported request: response status " + STATUS_NOT_FOUND);
+            }
+            httpExchange.close();
+        });
 
-			httpExchange.close();
-		});
+        httpServer.start();
 
-		httpServer.start();
+        System.out.println("Simple Server has been started at Port " + PORT);
+    }
 
-		LOG.info("Simple Server has been started at Port " + PORT);
-		LOG.info("Attention! Simple Server works with exactly one endpoint: '/health'. " +
-				"Requests passed to other endpoints are not supported.");
-	}
-
-	private static boolean isValidRequest(String requestMethod, String requestURI) {
-		return "GET".equals(requestMethod) &&
-				("/health".equals(requestURI) || "/health/".equals(requestURI));
-	}
+    private static boolean isSupportedRequest(String requestMethod, String requestURI) {
+        return SUPPORTED_METHOD.equals(requestMethod) &&
+                SUPPORTED_URIS.contains(requestURI);
+    }
 }
