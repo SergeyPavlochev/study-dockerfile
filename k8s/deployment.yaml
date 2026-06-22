@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ss-app
+  labels:
+    app: ss-app
+spec:
+  replicas: 2
+  minReadySeconds: 10
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: ss-app
+  template:
+    metadata:
+      labels:
+        app: ss-app
+    spec:
+      containers:
+        - name: ss-app
+          image: leokot/simple-server-app:latest
+          ports:
+            - containerPort: 8000
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 5
