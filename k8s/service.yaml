@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ss-app-svc
+spec:
+  selector:
+    app: ss-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000

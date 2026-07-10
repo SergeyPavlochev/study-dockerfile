@@ -1,0 +1,20 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ss-app-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2 
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: arch.homework
+      http:
+        paths:
+          - path: /(otusapp/spavlochev/)?(health)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: ss-app-svc
+                port:
+                  number: 80
