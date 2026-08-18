@@ -1,0 +1,15 @@
+name: Pull Image
+on: workflow_dispatch
+jobs:
+ pull:
+   runs-on: ubuntu-latest
+   steps:
+     - name: Pull Image
+       run: docker pull registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.7
+     - name: Save Image to Tar
+       run: docker save registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.7 -o image.tar
+     - name: Upload Artifact
+       uses: actions/upload-artifact@v4
+       with:
+         name: webhook-certgen-image
+         path: image.tar
